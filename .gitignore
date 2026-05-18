@@ -1,0 +1,43 @@
+# Зависимости (Dependencies)
+/node_modules
+.pnp
+.pnp.js
+
+# Сборка продакшена (Production build)
+/dist
+/build
+
+# Логи (Logs)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Отчеты о тестировании (Testing)
+/coverage
+
+# Переменные окружения (ОЧЕНЬ ВАЖНО - защита API ключей)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Системные файлы macOS / Windows (Misc)
+.DS_Store
+Thumbs.db
+
+# Настройки редакторов кода (IDEs/Editors)
+/.vscode/*
+!/.vscode/settings.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/extensions.json
+/.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
