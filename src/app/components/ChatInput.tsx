@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 
 interface ChatInputProps {
@@ -9,16 +10,34 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ value, onChange, onSend, onKeyPress, disabled }: ChatInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+
   return (
-    <div className={`flex items-center gap-2 bg-slate-800 rounded-xl px-4 py-3 transition-opacity ${disabled ? 'opacity-60' : ''}`}>
-      <input
-        type="text"
+    <div className={`flex items-end gap-2 bg-slate-800 rounded-xl px-4 py-2 transition-opacity ${disabled ? 'opacity-60' : ''}`}>
+      <textarea
+        ref={textareaRef}
+        rows={1}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyPress={onKeyPress}
+        onKeyDown={handleKeyDown}
         disabled={disabled}
         placeholder="Ask anything about Dmytro's experience..."
-        className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-500 outline-none disabled:cursor-not-allowed"
+        className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-500 outline-none resize-none overflow-y-auto leading-normal py-1.5 min-h-[28px] disabled:cursor-not-allowed"
+        style={{ maxHeight: '9rem' }}
       />
       <button
         onClick={onSend}
