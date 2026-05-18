@@ -1,0 +1,86 @@
+/* Experience Carousel Custom Styles */
+.experience-carousel-container {
+  width: 100%;
+  position: relative;
+}
+
+.experience-carousel-container .slick-slider {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.experience-carousel-container .slick-list {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.experience-carousel-container .slick-track {
+  position: relative;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.experience-carousel-container .slick-slide {
+  display: flex;
+  height: auto;
+  min-height: 1px;
+}
+
+.experience-carousel-container .slick-slide > div {
+  height: 100%;
+  width: 100%;
+}
+
+/* Custom Dots Styling */
+.experience-carousel-container .custom-dots {
+  position: relative;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  margin: 10px 0 0 0;
+  list-style: none;
+}
+
+.experience-carousel-container .custom-dots li {
+  margin: 0;
+  padding: 0;
+  width: auto;
+  height: auto;
+  cursor: pointer;
+}
+
+.experience-carousel-container .custom-dots li button {
+  display: block;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0;
+  line-height: 0;
+}
+
+.experience-carousel-container .custom-dots li.slick-active button div {
+  background-color: #6366f1 !important;
+  transform: scale(1.2);
+}
+
+.experience-carousel-container .slick-slide {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.experience-carousel-container .slick-slide.slick-active.slick-center {
+  opacity: 1;
+}
