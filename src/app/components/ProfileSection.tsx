@@ -11,7 +11,7 @@ export function ProfileSection() {
       {/* Name and Title */}
       <div className="text-center">
         <h1 className="text-white text-xl mb-1">Dmytro Vychkin</h1>
-        <p className="text-slate-400 text-sm">Senior .NET & AI Developer</p>
+        <p className="text-slate-400 text-sm">.NET & AI Developer</p>
       </div>
 
       {/* Social Icons */}

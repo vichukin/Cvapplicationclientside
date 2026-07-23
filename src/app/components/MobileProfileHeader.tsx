@@ -14,7 +14,7 @@ export function MobileProfileHeader() {
         <h1 className="text-white text-base leading-tight">Dmytro Vychkin</h1>
 
         {/* Title */}
-        <p className="text-slate-400 text-xs leading-tight mb-1">Senior .NET & AI Developer</p>
+        <p className="text-slate-400 text-xs leading-tight mb-1">.NET & AI Developer</p>
 
         {/* Social Icons - Compact Row */}
         <div className="flex gap-2">
