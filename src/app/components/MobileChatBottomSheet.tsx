@@ -4,6 +4,7 @@ import { ChatMessage } from './ChatMessage';
 import { SuggestedPrompts } from './SuggestedPrompts';
 import { ChatInput } from './ChatInput';
 import type { Message } from './ChatInterface';
+import type { RetryPayload } from './SystemBubble';
 
 interface MobileChatBottomSheetProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface MobileChatBottomSheetProps {
   onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   onPromptClick: (prompt: string) => void;
+  onRetry: (payload: RetryPayload) => void;
 }
 
 const suggestedPrompts = [
@@ -32,7 +34,8 @@ export function MobileChatBottomSheet({
   onInputChange,
   onSendMessage,
   onKeyPress,
-  onPromptClick
+  onPromptClick,
+  onRetry
 }: MobileChatBottomSheetProps) {
   const chatHistoryRef = useRef<HTMLDivElement>(null);
 
@@ -46,20 +49,16 @@ export function MobileChatBottomSheet({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 z-40 md:hidden"
         onClick={onClose}
       />
 
-      {/* Bottom Sheet */}
       <div className="fixed inset-x-0 bottom-0 bg-slate-900 rounded-t-3xl z-50 md:hidden flex flex-col max-h-[85vh]">
-        {/* Drag Handle */}
         <div className="flex justify-center py-3 border-b border-slate-700">
           <div className="w-12 h-1 bg-slate-600 rounded-full" />
         </div>
 
-        {/* Header */}
         <div className="border-b border-slate-700 px-4 py-3 flex items-center justify-between">
           <h2 className="text-white text-base">Chat with Dmytro's AI Assistant</h2>
           <div className="flex items-center gap-3">
@@ -76,18 +75,18 @@ export function MobileChatBottomSheet({
           </div>
         </div>
 
-        {/* Chat History */}
         <div ref={chatHistoryRef} className="flex-1 overflow-y-auto p-4">
           {messages.map((message) => (
             <ChatMessage
               key={message.id}
               role={message.role}
               text={message.text}
+              retryPayload={message.retryPayload}
+              onRetry={onRetry}
             />
           ))}
         </div>
 
-        {/* Bottom Input Zone */}
         <div className="border-t border-slate-700 px-4 py-3 bg-slate-900">
           <SuggestedPrompts
             prompts={suggestedPrompts}

@@ -2,11 +2,13 @@ import { useRef, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { SuggestedPrompts } from './SuggestedPrompts';
 import { ChatInput } from './ChatInput';
+import type { RetryPayload } from './SystemBubble';
 
 export interface Message {
   id: number;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system-cold-start' | 'system-error';
   text: string;
+  retryPayload?: RetryPayload;
 }
 
 interface ChatInterfaceProps {
@@ -17,6 +19,7 @@ interface ChatInterfaceProps {
   onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
   onPromptClick: (prompt: string) => void;
+  onRetry: (payload: RetryPayload) => void;
 }
 
 const suggestedPrompts = [
@@ -32,7 +35,8 @@ export function ChatInterface({
   onInputChange,
   onSendMessage,
   onKeyPress,
-  onPromptClick
+  onPromptClick,
+  onRetry
 }: ChatInterfaceProps) {
   const chatHistoryRef = useRef<HTMLDivElement>(null);
 
@@ -44,18 +48,18 @@ export function ChatInterface({
 
   return (
     <>
-      {/* Chat History */}
       <div ref={chatHistoryRef} className="flex-1 overflow-y-auto p-6">
         {messages.map((message) => (
           <ChatMessage
             key={message.id}
             role={message.role}
             text={message.text}
+            retryPayload={message.retryPayload}
+            onRetry={onRetry}
           />
         ))}
       </div>
 
-      {/* Bottom Input Zone */}
       <div className="border-t border-slate-700 px-6 py-4">
         <SuggestedPrompts
           prompts={suggestedPrompts}

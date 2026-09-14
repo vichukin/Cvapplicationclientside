@@ -11,11 +11,14 @@ import { SkillsCarousel } from './components/SkillsCarousel';
 import { EducationCarousel } from './components/EducationCarousel';
 import { ChatInterface } from './components/ChatInterface';
 import type { Message } from './components/ChatInterface';
+import type { RetryPayload } from './components/SystemBubble';
 import { MobileProfileHeader } from './components/MobileProfileHeader';
 import { MobileTabNavigation } from './components/MobileTabNavigation';
 import { FloatingActionButton } from './components/FloatingActionButton';
 import { MobileChatBottomSheet } from './components/MobileChatBottomSheet';
 import './styles/carousel.css';
+
+const API_URL = 'https://cvapplicationapi-gvhkanaaancwgud4.westeurope-01.azurewebsites.net/api/chat';
 
 const STORAGE_KEY = 'chat_history';
 
@@ -53,9 +56,10 @@ export default function App() {
   const desktopScrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
 
-  // Persist chat history to localStorage on every change
+  // Persist only user/assistant messages — system bubbles are transient
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    const persistable = messages.filter(m => m.role === 'user' || m.role === 'assistant');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
   }, [messages]);
 
   // Scroll to top and reset carousel slide when tab changes
@@ -65,31 +69,37 @@ export default function App() {
     setCurrentSlide(0);
   }, [activeTab]);
 
-  const handleSendMessage = useCallback(async () => {
-    const text = inputValue.trim();
-    if (!text || isStreaming) return;
-
-    const userMessage: Message = { id: Date.now(), role: 'user', text };
-
-    // Build the history that will be sent (existing messages + the new user message)
-    const historyToSend = [...messages, userMessage].map(({ role, text: t }) => ({ role, text: t }));
-
-    // Add user message and an empty assistant placeholder in one update
-    const assistantId = Date.now() + 1;
-    setMessages(prev => [
-      ...prev,
-      userMessage,
-      { id: assistantId, role: 'assistant', text: '' }
-    ]);
-    setInputValue('');
+  // Core fetch + stream logic, shared by handleSendMessage and handleRetry
+  const executeRequest = useCallback(async (historyToSend: RetryPayload) => {
     setIsStreaming(true);
 
+    const assistantId = Date.now();
+    const coldStartId = assistantId + 1;
+
+    // Add an empty assistant placeholder immediately
+    setMessages(prev => [
+      ...prev,
+      { id: assistantId, role: 'assistant', text: '' }
+    ]);
+
+    // Cold-start warning fires if no response within 4 seconds
+    const coldStartTimer = setTimeout(() => {
+      setMessages(prev => [
+        ...prev,
+        { id: coldStartId, role: 'system-cold-start', text: '' }
+      ]);
+    }, 4000);
+
     try {
-      const response = await fetch('https://cvapplicationapi-gvhkanaaancwgud4.westeurope-01.azurewebsites.net/api/chat', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: historyToSend })
       });
+
+      // Response headers received — cancel cold-start and remove the bubble
+      clearTimeout(coldStartTimer);
+      setMessages(prev => prev.filter(m => m.id !== coldStartId));
 
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`);
@@ -105,45 +115,56 @@ export default function App() {
 
         buffer += decoder.decode(value, { stream: true });
 
-        // SSE frames are separated by double newlines
         const frames = buffer.split('\n\n');
-        // Keep the last (potentially incomplete) frame in the buffer
         buffer = frames.pop() ?? '';
 
         for (const frame of frames) {
           if (!frame.startsWith('data: ')) continue;
-          // Strip the "data: " prefix and unescape literal \n sequences
           const chunk = frame.slice(6).replace(/\\n/g, '\n');
-          setMessages(prev => {
-            const updated = [...prev];
-            const lastIndex = updated.length - 1;
-            if (updated[lastIndex]?.role === 'assistant') {
-              updated[lastIndex] = {
-                ...updated[lastIndex],
-                text: updated[lastIndex].text + chunk
-              };
-            }
-            return updated;
-          });
+          // Target by id for precision — avoids any last-index ambiguity
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId ? { ...m, text: m.text + chunk } : m
+          ));
         }
       }
-    } catch (err) {
-      // On error, replace the empty placeholder with a friendly message
+    } catch {
+      clearTimeout(coldStartTimer);
+      // Remove cold-start bubble and the empty assistant placeholder, insert error bubble
       setMessages(prev => {
-        const updated = [...prev];
-        const lastIndex = updated.length - 1;
-        if (updated[lastIndex]?.role === 'assistant' && updated[lastIndex].text === '') {
-          updated[lastIndex] = {
-            ...updated[lastIndex],
-            text: "Sorry, I couldn't reach the server. Please try again later."
-          };
-        }
-        return updated;
+        const cleaned = prev.filter(m =>
+          m.id !== coldStartId &&
+          !(m.id === assistantId && m.text === '')
+        );
+        return [
+          ...cleaned,
+          { id: Date.now(), role: 'system-error', text: '', retryPayload: historyToSend }
+        ];
       });
     } finally {
+      clearTimeout(coldStartTimer);
       setIsStreaming(false);
     }
-  }, [inputValue, isStreaming, messages]);
+  }, []);
+
+  const handleSendMessage = useCallback(async () => {
+    const text = inputValue.trim();
+    if (!text || isStreaming) return;
+
+    const userMessage: Message = { id: Date.now(), role: 'user', text };
+    const historyToSend = [...messages, userMessage].map(({ role, text: t }) => ({ role, text: t }));
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+
+    await executeRequest(historyToSend);
+  }, [inputValue, isStreaming, messages, executeRequest]);
+
+  const handleRetry = useCallback(async (retryPayload: RetryPayload) => {
+    if (isStreaming) return;
+    // Remove the error bubble before re-trying
+    setMessages(prev => prev.filter(m => m.role !== 'system-error'));
+    await executeRequest(retryPayload);
+  }, [isStreaming, executeRequest]);
 
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -238,6 +259,7 @@ export default function App() {
             onSendMessage={handleSendMessage}
             onKeyPress={handleKeyPress}
             onPromptClick={handlePromptClick}
+            onRetry={handleRetry}
           />
         </div>
       </div>
@@ -273,6 +295,7 @@ export default function App() {
         onSendMessage={handleSendMessage}
         onKeyPress={handleKeyPress}
         onPromptClick={handlePromptClick}
+        onRetry={handleRetry}
       />
     </div>
   );

@@ -1,12 +1,24 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { SystemBubble } from './SystemBubble';
+import type { RetryPayload } from './SystemBubble';
 
 interface ChatMessageProps {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system-cold-start' | 'system-error';
   text: string;
+  retryPayload?: RetryPayload;
+  onRetry?: (payload: RetryPayload) => void;
 }
 
-export function ChatMessage({ role, text }: ChatMessageProps) {
+export function ChatMessage({ role, text, retryPayload, onRetry }: ChatMessageProps) {
+  if (role === 'system-cold-start') {
+    return <SystemBubble type="cold-start" />;
+  }
+
+  if (role === 'system-error') {
+    return <SystemBubble type="error" retryPayload={retryPayload} onRetry={onRetry} />;
+  }
+
   const isUser = role === 'user';
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
