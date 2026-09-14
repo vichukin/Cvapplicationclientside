@@ -4,8 +4,12 @@ export function ProfileSection() {
   return (
     <div className="flex flex-col items-center gap-4 p-8 border-b border-slate-700">
       {/* Avatar */}
-      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-        <span className="text-white text-3xl">DV</span>
+      <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-indigo-500/50">
+        <img
+          src="https://cvapplicationstorage.blob.core.windows.net/cvcontext/me1.jpg"
+          alt="Dmytro Vychkin"
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Name and Title */}

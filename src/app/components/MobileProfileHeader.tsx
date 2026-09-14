@@ -4,8 +4,12 @@ export function MobileProfileHeader() {
   return (
     <div className="flex flex-row items-center gap-4 p-4 border-b border-slate-700 md:hidden bg-slate-800">
       {/* Avatar - Left Side */}
-      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-        <span className="text-white text-xl">DV</span>
+      <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-indigo-500/50 flex-shrink-0">
+        <img
+          src="https://cvapplicationstorage.blob.core.windows.net/cvcontext/me1.jpg"
+          alt="Dmytro Vychkin"
+          className="w-full h-full object-cover"
+        />
       </div>
 
       {/* Right Side - Info Stack */}
