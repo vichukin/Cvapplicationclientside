@@ -10,21 +10,7 @@ export function SystemBubble({ type, retryPayload, onRetry }: SystemBubbleProps)
   if (type === 'cold-start') {
     return (
       <div className="flex justify-center mb-4 px-2">
-        <div className="w-full max-w-[85%] rounded-xl px-4 py-3 bg-slate-700/40 border border-slate-600/50 flex items-center gap-3">
-          <div className="flex gap-1 flex-shrink-0">
-            <span
-              className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-              style={{ animationDelay: '0ms' }}
-            />
-            <span
-              className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-              style={{ animationDelay: '160ms' }}
-            />
-            <span
-              className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"
-              style={{ animationDelay: '320ms' }}
-            />
-          </div>
+        <div className="w-full max-w-[85%] rounded-xl px-5 py-4 bg-slate-700/40 border border-slate-600/50 text-center">
           <p className="text-slate-400 text-xs leading-relaxed">
             ☁️ Waking up the server... The initial start may take 10–15 seconds. Thank you for your patience.
           </p>

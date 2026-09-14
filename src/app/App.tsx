@@ -73,21 +73,18 @@ export default function App() {
   const executeRequest = useCallback(async (historyToSend: RetryPayload) => {
     setIsStreaming(true);
 
-    const assistantId = Date.now();
+    let assistantId = Date.now();
     const coldStartId = assistantId + 1;
 
-    // Add an empty assistant placeholder immediately
-    setMessages(prev => [
-      ...prev,
-      { id: assistantId, role: 'assistant', text: '' }
-    ]);
+    // Phase 1: typing indicator (empty assistant bubble shows animated dots)
+    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', text: '' }]);
 
-    // Cold-start warning fires if no response within 4 seconds
+    // Phase 2: after 4s with no response, SWAP dots for cold-start text
     const coldStartTimer = setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        { id: coldStartId, role: 'system-cold-start', text: '' }
-      ]);
+      setMessages(prev => {
+        const withoutTyping = prev.filter(m => m.id !== assistantId);
+        return [...withoutTyping, { id: coldStartId, role: 'system-cold-start', text: '' }];
+      });
     }, 4000);
 
     try {
@@ -97,9 +94,15 @@ export default function App() {
         body: JSON.stringify({ messages: historyToSend })
       });
 
-      // Response headers received — cancel cold-start and remove the bubble
+      // Phase 3: response arrived — cancel timer, remove both dots and cold-start,
+      // add a fresh empty assistant placeholder to stream into
       clearTimeout(coldStartTimer);
-      setMessages(prev => prev.filter(m => m.id !== coldStartId));
+      const streamId = Date.now() + 2;
+      setMessages(prev => {
+        const cleaned = prev.filter(m => m.id !== assistantId && m.id !== coldStartId);
+        return [...cleaned, { id: streamId, role: 'assistant', text: '' }];
+      });
+      assistantId = streamId;
 
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`);
@@ -121,7 +124,6 @@ export default function App() {
         for (const frame of frames) {
           if (!frame.startsWith('data: ')) continue;
           const chunk = frame.slice(6).replace(/\\n/g, '\n');
-          // Target by id for precision — avoids any last-index ambiguity
           setMessages(prev => prev.map(m =>
             m.id === assistantId ? { ...m, text: m.text + chunk } : m
           ));
@@ -129,7 +131,7 @@ export default function App() {
       }
     } catch {
       clearTimeout(coldStartTimer);
-      // Remove cold-start bubble and the empty assistant placeholder, insert error bubble
+      // Remove any loading state and insert the error bubble
       setMessages(prev => {
         const cleaned = prev.filter(m =>
           m.id !== coldStartId &&
