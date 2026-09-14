@@ -1,5 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
+import { TypingIndicator } from './TypingIndicator';
+import { SystemBubble } from './SystemBubble';
 import { SuggestedPrompts } from './SuggestedPrompts';
 import { ChatInput } from './ChatInput';
 import type { RetryPayload } from './SystemBubble';
@@ -15,6 +17,8 @@ interface ChatInterfaceProps {
   messages: Message[];
   inputValue: string;
   isStreaming: boolean;
+  isLoading: boolean;
+  isWakingUp: boolean;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
@@ -32,6 +36,8 @@ export function ChatInterface({
   messages,
   inputValue,
   isStreaming,
+  isLoading,
+  isWakingUp,
   onInputChange,
   onSendMessage,
   onKeyPress,
@@ -44,7 +50,7 @@ export function ChatInterface({
     if (chatHistoryRef.current) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading, isWakingUp]);
 
   return (
     <>
@@ -58,6 +64,8 @@ export function ChatInterface({
             onRetry={onRetry}
           />
         ))}
+        {isLoading && <TypingIndicator />}
+        {isWakingUp && <SystemBubble type="cold-start" />}
       </div>
 
       <div className="border-t border-slate-700 px-6 py-4">

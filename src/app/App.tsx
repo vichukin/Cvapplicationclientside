@@ -52,6 +52,8 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>(loadMessages);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   const desktopScrollRef = useRef<HTMLDivElement>(null);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
@@ -72,19 +74,13 @@ export default function App() {
   // Core fetch + stream logic, shared by handleSendMessage and handleRetry
   const executeRequest = useCallback(async (historyToSend: RetryPayload) => {
     setIsStreaming(true);
+    setIsLoading(true);
+    setIsWakingUp(false);
 
-    let assistantId = Date.now();
-    const coldStartId = assistantId + 1;
-
-    // Phase 1: typing indicator (empty assistant bubble shows animated dots)
-    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', text: '' }]);
-
-    // Phase 2: after 4s with no response, SWAP dots for cold-start text
+    // After 4s with no response: swap typing dots for cold-start text
     const coldStartTimer = setTimeout(() => {
-      setMessages(prev => {
-        const withoutTyping = prev.filter(m => m.id !== assistantId);
-        return [...withoutTyping, { id: coldStartId, role: 'system-cold-start', text: '' }];
-      });
+      setIsLoading(false);
+      setIsWakingUp(true);
     }, 4000);
 
     try {
@@ -94,19 +90,19 @@ export default function App() {
         body: JSON.stringify({ messages: historyToSend })
       });
 
-      // Phase 3: response arrived — cancel timer, remove both dots and cold-start,
-      // add a fresh empty assistant placeholder to stream into
+      // Response headers arrived — loading states are done
       clearTimeout(coldStartTimer);
-      const streamId = Date.now() + 2;
-      setMessages(prev => {
-        const cleaned = prev.filter(m => m.id !== assistantId && m.id !== coldStartId);
-        return [...cleaned, { id: streamId, role: 'assistant', text: '' }];
-      });
-      assistantId = streamId;
+      setIsLoading(false);
+      setIsWakingUp(false);
 
       if (!response.ok || !response.body) {
         throw new Error(`HTTP ${response.status}`);
       }
+
+      // Add the streaming placeholder to the messages array now (not before fetch),
+      // so the array never contains a temporary loading item
+      const assistantId = Date.now();
+      setMessages(prev => [...prev, { id: assistantId, role: 'assistant', text: '' }]);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -124,26 +120,22 @@ export default function App() {
         for (const frame of frames) {
           if (!frame.startsWith('data: ')) continue;
           const chunk = frame.slice(6).replace(/\\n/g, '\n');
+          // assistantId is a const here — no closure/reassignment race condition
           setMessages(prev => prev.map(m =>
             m.id === assistantId ? { ...m, text: m.text + chunk } : m
           ));
         }
       }
     } catch {
-      clearTimeout(coldStartTimer);
-      // Remove any loading state and insert the error bubble
+      // Clean up any empty assistant placeholder and show error bubble
       setMessages(prev => {
-        const cleaned = prev.filter(m =>
-          m.id !== coldStartId &&
-          !(m.id === assistantId && m.text === '')
-        );
-        return [
-          ...cleaned,
-          { id: Date.now(), role: 'system-error', text: '', retryPayload: historyToSend }
-        ];
+        const cleaned = prev.filter(m => !(m.role === 'assistant' && m.text === ''));
+        return [...cleaned, { id: Date.now(), role: 'system-error', text: '', retryPayload: historyToSend }];
       });
     } finally {
       clearTimeout(coldStartTimer);
+      setIsLoading(false);
+      setIsWakingUp(false);
       setIsStreaming(false);
     }
   }, []);
@@ -257,6 +249,8 @@ export default function App() {
             messages={messages}
             inputValue={inputValue}
             isStreaming={isStreaming}
+            isLoading={isLoading}
+            isWakingUp={isWakingUp}
             onInputChange={setInputValue}
             onSendMessage={handleSendMessage}
             onKeyPress={handleKeyPress}
@@ -293,6 +287,8 @@ export default function App() {
         messages={messages}
         inputValue={inputValue}
         isStreaming={isStreaming}
+        isLoading={isLoading}
+        isWakingUp={isWakingUp}
         onInputChange={setInputValue}
         onSendMessage={handleSendMessage}
         onKeyPress={handleKeyPress}

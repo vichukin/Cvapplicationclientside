@@ -1,6 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
+import { TypingIndicator } from './TypingIndicator';
+import { SystemBubble } from './SystemBubble';
 import { SuggestedPrompts } from './SuggestedPrompts';
 import { ChatInput } from './ChatInput';
 import type { Message } from './ChatInterface';
@@ -12,6 +14,8 @@ interface MobileChatBottomSheetProps {
   messages: Message[];
   inputValue: string;
   isStreaming: boolean;
+  isLoading: boolean;
+  isWakingUp: boolean;
   onInputChange: (value: string) => void;
   onSendMessage: () => void;
   onKeyPress: (e: React.KeyboardEvent) => void;
@@ -31,6 +35,8 @@ export function MobileChatBottomSheet({
   messages,
   inputValue,
   isStreaming,
+  isLoading,
+  isWakingUp,
   onInputChange,
   onSendMessage,
   onKeyPress,
@@ -43,7 +49,7 @@ export function MobileChatBottomSheet({
     if (chatHistoryRef.current && isOpen) {
       chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isLoading, isWakingUp]);
 
   if (!isOpen) return null;
 
@@ -85,6 +91,8 @@ export function MobileChatBottomSheet({
               onRetry={onRetry}
             />
           ))}
+          {isLoading && <TypingIndicator />}
+          {isWakingUp && <SystemBubble type="cold-start" />}
         </div>
 
         <div className="border-t border-slate-700 px-4 py-3 bg-slate-900">
