@@ -24,9 +24,10 @@ interface MobileChatBottomSheetProps {
 }
 
 const suggestedPrompts = [
-  'Tell me about RAG',
-  'Team Lead experience',
-  'English level'
+  'How was this app built?',
+  'Work experience',
+  'English level',
+  'When can you start?'
 ];
 
 export function MobileChatBottomSheet({
