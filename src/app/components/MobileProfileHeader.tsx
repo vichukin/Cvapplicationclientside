@@ -14,7 +14,7 @@ export function MobileProfileHeader() {
         <h1 className="text-white text-base leading-tight">Dmytro Vychkin</h1>
 
         {/* Title */}
-        <p className="text-slate-400 text-xs leading-tight mb-1">.NET & AI Developer</p>
+        <p className="text-slate-400 text-xs leading-tight mb-1">Senior .NET & AI Developer</p>
 
         {/* Social Icons - Compact Row */}
         <div className="flex gap-2">
@@ -32,14 +32,13 @@ export function MobileProfileHeader() {
           >
             <Mail className="w-3.5 h-3.5 text-slate-300" />
           </a>
-          <a
-            href='https://cvapplicationstorage.blob.core.windows.net/cvcontext/CV_Dmytro_Vychkin_net_Developer.pdf'
-            target="_blank"
+          <button
+            onClick={() => alert('CV download triggered!')}
             className="h-7 px-2 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center gap-1 transition-colors"
           >
             <Download className="w-3.5 h-3.5 text-slate-300" />
             <span className="text-slate-300 text-xs">CV</span>
-          </a>
+          </button>
         </div>
       </div>
     </div>

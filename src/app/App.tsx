@@ -85,7 +85,7 @@ export default function App() {
     setIsStreaming(true);
 
     try {
-      const response = await fetch('https://cvapplicationapi-gvhkanaaancwgud4.westeurope-01.azurewebsites.net/api/chat', {
+      const response = await fetch('https://localhost:7000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: historyToSend })
